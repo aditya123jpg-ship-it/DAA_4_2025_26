@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Inventory Management System — BST</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --bg:        #0d1117;
+    --surface:   #161b22;
+    --surface2:  #1f2937;
+    --border:    #30363d;
+    --accent:    #f97316;
+    --accent2:   #fb923c;
+    --green:     #22c55e;
+    --red:       #ef4444;
+    --blue:      #38bdf8;
+    --yellow:    #facc15;
+    --text:      #e6edf3;
+    --muted:     #8b949e;
+    --font-head: 'Syne', sans-serif;
+    --font-mono: 'Space Mono', monospace;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-mono);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #1a1f2e 0%, #0d1117 60%);
+    border-bottom: 2px solid var(--accent);
+    padding: 28px 32px 22px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .logo {
+    font-family: var(--font-head);
+    font-size: 1.55rem;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+    color: var(--text);
+  }
+  .logo span { color: var(--accent); }
+  .badge {
+    font-size: 0.7rem;
+    background: var(--accent);
+    color: #000;
+    font-weight: 700;
+    padding: 3px 10px;
+    border-radius: 999px;
+    letter-spacing: 1px;
+  }
+  .stats-bar {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .stat {
+    font-size: 0.75rem;
+    color: var(--muted);
+  }
+  .stat strong {
+    color: var(--accent2);
+    font-size: 1rem;
+    display: block;
+    font-family: var(--font-head);
+  }
+
+  /* ── LAYOUT ── */
+  .app {
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    min-height: calc(100vh - 90px);
+  }
+
+  /* ── SIDEBAR ── */
+  .sidebar {
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .sidebar-label {
+    font-size: 0.65rem;
+    letter-spacing: 2px;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-bottom: 4px;
+    margin-top: 8px;
+  }
+  .nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 14px;
+    border-radius: 8px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--muted);
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    cursor: pointer;
+    text-align: left;
+    transition: all .18s;
+    width: 100%;
+  }
+  .nav-btn:hover {
+    background: var(--surface2);
+    border-color: var(--border);
+    color: var(--text);
+  }
+  .nav-btn.active {
+    background: rgba(249,115,22,0.12);
+    border-color: var(--accent);
+    color: var(--accent);
+  }
+  .nav-btn .icon {
+    font-size: 1rem;
+    width: 20px;
+    text-align: center;
+  }
+
+  /* ── MAIN ── */
+  .main {
+    padding: 28px 32px;
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    overflow-y: auto;
+  }
+
+  /* ── PANEL ── */
+  .panel {
+    display: none;
+    flex-direction: column;
+    gap: 20px;
+    animation: fadeIn .25s ease;
+  }
+  .panel.active { display: flex; }
+  @keyframes fadeIn { from { opacity:0; transform:translateY(6px); } to { opacity:1; transform:translateY(0); } }
+
+  .panel-title {
+    font-family: var(--font-head);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .panel-title .dot { width:8px; height:8px; border-radius:50%; background:var(--accent); }
+
+  /* ── FORM CARD ── */
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 24px;
+  }
+  .card-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--muted);
+    margin-bottom: 16px;
+  }
+  .form-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: flex-end;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+    min-width: 140px;
+  }
+  label {
+    font-size: 0.72rem;
+    color: var(--muted);
+    letter-spacing: 0.5px;
+  }
+  input[type="text"], input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+    width: 100%;
+    outline: none;
+    transition: border-color .18s;
+  }
+  input:focus { border-color: var(--accent); }
+
+  .btn {
+    padding: 10px 22px;
+    border-radius: 8px;
+    font-family: var(--font-mono);
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: all .18s;
+    letter-spacing: 0.5px;
+    white-space: nowrap;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #000;
+  }
+  .btn-primary:hover { background: var(--accent2); transform: translateY(-1px); }
+  .btn-danger {
+    background: transparent;
+    color: var(--red);
+    border: 1px solid var(--red);
+  }
+  .btn-danger:hover { background: rgba(239,68,68,0.12); }
+  .btn-blue {
+    background: transparent;
+    color: var(--blue);
+    border: 1px solid var(--blue);
+  }
+  .btn-blue:hover { background: rgba(56,189,248,0.1); }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed;
+    bottom: 28px;
+    right: 28px;
+    padding: 12px 20px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+    font-weight: 700;
+    z-index: 9999;
+    opacity: 0;
+    transform: translateY(12px);
+    transition: all .28s;
+    pointer-events: none;
+    max-width: 320px;
+  }
+  #toast.show { opacity: 1; transform: translateY(0); }
+  #toast.success { background: var(--green); color: #000; }
+  #toast.error   { background: var(--red);   color: #fff; }
+  #toast.info    { background: var(--blue);  color: #000; }
+
+  /* ── INVENTORY TABLE ── */
+  .table-wrap { overflow-x: auto; }
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  thead th {
+    text-align: left;
+    padding: 10px 16px;
+    font-size: 0.68rem;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  tbody tr {
+    border-bottom: 1px solid rgba(48,54,61,0.5);
+    transition: background .15s;
+  }
+  tbody tr:hover { background: var(--surface2); }
+  tbody td {
+    padding: 11px 16px;
+    color: var(--text);
+  }
+  .price-cell { color: var(--green); font-weight: 700; }
+  .rank-cell  { color: var(--muted); }
+  .name-cell  { color: var(--accent2); }
+  .empty-msg {
+    text-align: center;
+    padding: 40px;
+    color: var(--muted);
+    font-size: 0.85rem;
+  }
+
+  /* ── SEARCH RESULT ── */
+  .result-box {
+    border-radius: 10px;
+    padding: 18px 22px;
+    border: 1px solid var(--border);
+    background: var(--surface2);
+    font-size: 0.85rem;
+    line-height: 1.7;
+  }
+  .result-box.found { border-color: var(--green); }
+  .result-box.not-found { border-color: var(--red); }
+  .result-key { color: var(--muted); font-size: 0.72rem; text-transform: uppercase; letter-spacing: 1px; }
+  .result-val { color: var(--text); font-size: 1rem; font-weight: 700; }
+
+  /* ── COMPARE TABLE ── */
+  .compare-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+  }
+  .compare-card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px;
+    text-align: center;
+  }
+  .compare-card.winner { border-color: var(--green); }
+  .compare-card.loser  { border-color: var(--red); }
+  .compare-card h3 { font-family: var(--font-head); font-size: 1rem; margin-bottom: 8px; }
+  .compare-card .big-num { font-size: 2.5rem; font-weight: 700; font-family: var(--font-head); }
+  .compare-card .label { font-size: 0.7rem; color: var(--muted); }
+  .winner .big-num { color: var(--green); }
+  .loser  .big-num { color: var(--red);   }
+  .neutral .big-num { color: var(--yellow); }
+
+  /* ── COMPLEXITY TABLE ── */
+  .complexity-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+  }
+  .complexity-table th {
+    background: var(--surface2);
+    padding: 10px 16px;
+    text-align: left;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+  }
+  .complexity-table td {
+    padding: 11px 16px;
+    border-bottom: 1px solid rgba(48,54,61,0.4);
+  }
+  .complexity-table .op-col { color: var(--accent2); font-weight: 700; }
+  .complexity-table .best  { color: var(--green); }
+  .complexity-table .worst { color: var(--red); }
+
+  /* ── TREE VIZ ── */
+  .tree-canvas-wrap {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    overflow: auto;
+  }
+  #treeCanvas {
+    display: block;
+    margin: 0 auto;
+  }
+
+  /* ── SKEW BADGE ── */
+  .skew-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: 999px;
+    font-size: 0.72rem;
+    font-weight: 700;
+  }
+  .skew-badge.balanced { background: rgba(34,197,94,0.15); color: var(--green); border: 1px solid var(--green); }
+  .skew-badge.skewed   { background: rgba(239,68,68,0.15);  color: var(--red);   border: 1px solid var(--red);   }
+
+  /* ── DELETE ACTIONS ── */
+  .del-btn {
+    background: transparent;
+    border: none;
+    color: var(--red);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-family: var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: background .15s;
+  }
+  .del-btn:hover { background: rgba(239,68,68,0.12); }
+
+  .edit-btn {
+    background: transparent;
+    border: none;
+    color: var(--blue);
+    cursor: pointer;
+    font-size: 0.82rem;
+    font-family: var(--font-mono);
+    padding: 4px 10px;
+    border-radius: 6px;
+    transition: background .15s;
+  }
+  .edit-btn:hover { background: rgba(56,189,248,0.1); }
+
+  /* ── INLINE EDIT ── */
+  .inline-edit {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+  .inline-edit input {
+    width: 90px;
+    padding: 5px 8px;
+    font-size: 0.8rem;
+  }
+  .inline-edit button {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+  }
+
+  /* ── RESPONSIVE ── */
+  @media (max-width: 768px) {
+    .app { grid-template-columns: 1fr; }
+    .sidebar { flex-direction: row; flex-wrap: wrap; border-right: none; border-bottom: 1px solid var(--border); }
+    .sidebar-label { display: none; }
+    .compare-grid { grid-template-columns: 1fr; }
+    .main { padding: 20px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <div class="logo">Inventory<span>BST</span></div>
+    <div style="font-size:0.7rem;color:var(--muted);margin-top:3px;">Binary Search Tree · Algorithm Analysis</div>
+  </div>
+  <div class="stats-bar">
+    <div class="stat"><strong id="hdr-count">7</strong>Items</div>
+    <div class="stat"><strong id="hdr-tree">Balanced</strong>Tree State</div>
+    <div class="badge">DSA PROJECT</div>
+  </div>
+</header>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-label">Operations</div>
+    <button class="nav-btn active" onclick="switchPanel('inventory')">
+      <span class="icon">📦</span> Inventory
+    </button>
+    <button class="nav-btn" onclick="switchPanel('add')">
+      <span class="icon">➕</span> Add Item
+    </button>
+    <button class="nav-btn" onclick="switchPanel('search')">
+      <span class="icon">🔍</span> Search Item
+    </button>
+    <button class="nav-btn" onclick="switchPanel('delete')">
+      <span class="icon">🗑️</span> Delete Item
+    </button>
+    <button class="nav-btn" onclick="switchPanel('update')">
+      <span class="icon">✏️</span> Update Price
+    </button>
+    <div class="sidebar-label" style="margin-top:12px;">Analysis</div>
+    <button class="nav-btn" onclick="switchPanel('compare')">
+      <span class="icon">⚖️</span> Array vs BST
+    </button>
+    <button class="nav-btn" onclick="switchPanel('complexity')">
+      <span class="icon">📊</span> Complexity Analysis
+    </button>
+    <button class="nav-btn" onclick="switchPanel('tree')">
+      <span class="icon">🌳</span> Tree Visualizer
+    </button>
+  </nav>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- ── INVENTORY ── -->
+    <div class="panel active" id="panel-inventory">
+      <div class="panel-title"><div class="dot"></div>Inventory</div>
+      <div class="card">
+        <div class="card-title">All Items · Sorted A → Z (Inorder Traversal)</div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Item Name</th>
+                <th>Price (₹)</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="inv-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ADD ── -->
+    <div class="panel" id="panel-add">
+      <div class="panel-title"><div class="dot"></div>Add New Item</div>
+      <div class="card">
+        <div class="card-title">Insert into BST</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Item Name</label>
+            <input type="text" id="add-name" placeholder="e.g. Mango" />
+          </div>
+          <div class="form-group">
+            <label>Price (₹)</label>
+            <input type="number" id="add-price" placeholder="e.g. 80" min="0" step="0.01" />
+          </div>
+          <button class="btn btn-primary" onclick="doAdd()">Add Item</button>
+        </div>
+        <div id="add-result" style="margin-top:14px;"></div>
+      </div>
+      <div class="card" style="font-size:0.78rem;color:var(--muted);line-height:1.8;">
+        <div class="card-title">How BST Insert Works</div>
+        Start at root → compare name alphabetically → go left if smaller, right if larger → repeat until empty slot → insert here.<br/>
+        <span style="color:var(--blue);">Time Complexity: O(log n) balanced · O(n) skewed</span>
+      </div>
+    </div>
+
+    <!-- ── SEARCH ── -->
+    <div class="panel" id="panel-search">
+      <div class="panel-title"><div class="dot"></div>Search Item</div>
+      <div class="card">
+        <div class="card-title">BST Search</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Item Name</label>
+            <input type="text" id="search-name" placeholder="e.g. Rice" />
+          </div>
+          <button class="btn btn-primary" onclick="doSearch()">Search</button>
+        </div>
+        <div id="search-result" style="margin-top:16px;"></div>
+      </div>
+    </div>
+
+    <!-- ── DELETE ── -->
+    <div class="panel" id="panel-delete">
+      <div class="panel-title"><div class="dot"></div>Delete Item</div>
+      <div class="card">
+        <div class="card-title">Remove from BST</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Item Name</label>
+            <input type="text" id="del-name" placeholder="e.g. Butter" />
+          </div>
+          <button class="btn btn-danger" onclick="doDelete()">Delete</button>
+        </div>
+        <div id="del-result" style="margin-top:14px;"></div>
+      </div>
+      <div class="card" style="font-size:0.78rem;color:var(--muted);line-height:1.9;">
+        <div class="card-title">Delete Cases Handled</div>
+        <span style="color:var(--green);">Case 1:</span> Leaf node → remove directly.<br/>
+        <span style="color:var(--yellow);">Case 2:</span> One child → replace with child.<br/>
+        <span style="color:var(--accent);">Case 3:</span> Two children → replace with inorder successor (min of right subtree).
+      </div>
+    </div>
+
+    <!-- ── UPDATE ── -->
+    <div class="panel" id="panel-update">
+      <div class="panel-title"><div class="dot"></div>Update Price</div>
+      <div class="card">
+        <div class="card-title">Modify Item Price</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Item Name</label>
+            <input type="text" id="upd-name" placeholder="e.g. Milk" />
+          </div>
+          <div class="form-group">
+            <label>New Price (₹)</label>
+            <input type="number" id="upd-price" placeholder="e.g. 65" min="0" step="0.01" />
+          </div>
+          <button class="btn btn-blue" onclick="doUpdate()">Update</button>
+        </div>
+        <div id="upd-result" style="margin-top:14px;"></div>
+      </div>
+    </div>
+
+    <!-- ── COMPARE ── -->
+    <div class="panel" id="panel-compare">
+      <div class="panel-title"><div class="dot"></div>Array vs BST Search Comparison</div>
+      <div class="card">
+        <div class="card-title">Enter Item to Compare Search Methods</div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>Item Name</label>
+            <input type="text" id="cmp-name" placeholder="e.g. Rice" />
+          </div>
+          <button class="btn btn-primary" onclick="doCompare()">Compare</button>
+        </div>
+      </div>
+      <div id="cmp-result"></div>
+    </div>
+
+    <!-- ── COMPLEXITY ── -->
+    <div class="panel" id="panel-complexity">
+      <div class="panel-title"><div class="dot"></div>Complexity Analysis</div>
+      <div class="card">
+        <div class="card-title">BST Operations</div>
+        <table class="complexity-table">
+          <thead>
+            <tr><th>Operation</th><th>Best Case</th><th>Worst Case</th><th>Avg Case</th></tr>
+          </thead>
+          <tbody>
+            <tr><td class="op-col">Search</td><td class="best">O(log n)</td><td class="worst">O(n)</td><td class="best">O(log n)</td></tr>
+            <tr><td class="op-col">Insert</td><td class="best">O(log n)</td><td class="worst">O(n)</td><td class="best">O(log n)</td></tr>
+            <tr><td class="op-col">Delete</td><td class="best">O(log n)</td><td class="worst">O(n)</td><td class="best">O(log n)</td></tr>
+            <tr><td class="op-col">Display (all)</td><td class="best">O(n)</td><td class="worst">O(n)</td><td class="best">O(n)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card" style="line-height:1.9;font-size:0.82rem;">
+        <div class="card-title">Insights</div>
+        <p style="color:var(--green);margin-bottom:8px;">✅ Best Case — Balanced BST</p>
+        <p style="color:var(--muted);">Items inserted in random order. Tree stays balanced. Max levels = log₂(n). Example: 7 items → only 3 levels.</p>
+        <br/>
+        <p style="color:var(--red);margin-bottom:8px;">⚠️ Worst Case — Skewed BST</p>
+        <p style="color:var(--muted);">Items inserted in sorted order (e.g. Apple → Banana → Cherry). Tree becomes a linked list. Search = O(n)!</p>
+        <br/>
+        <p style="color:var(--yellow);margin-bottom:8px;">🔧 Advanced Fix (Theory)</p>
+        <p style="color:var(--muted);">AVL Tree auto-balances on every insert/delete.<br/>Red-Black Tree: used in C++ <code style="color:var(--accent);">map</code> and Java <code style="color:var(--accent);">TreeMap</code>. Both guarantee O(log n) always.</p>
+      </div>
+      <div class="card">
+        <div class="card-title">Current Tree State</div>
+        <div id="complexity-status" style="display:flex;align-items:center;gap:16px;flex-wrap:wrap;font-size:0.85rem;">
+          <span id="cplx-count" style="color:var(--text);">Items: —</span>
+          <span id="cplx-logn"  style="color:var(--blue);">BST Best: —</span>
+          <span id="cplx-n"     style="color:var(--muted);">Array Worst: —</span>
+          <span id="cplx-skew"></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── TREE VIZ ── -->
+    <div class="panel" id="panel-tree">
+      <div class="panel-title"><div class="dot"></div>Tree Visualizer</div>
+      <div class="tree-canvas-wrap">
+        <canvas id="treeCanvas" width="700" height="400"></canvas>
+      </div>
+      <div class="card" style="font-size:0.78rem;color:var(--muted);line-height:1.8;">
+        <div class="card-title">Legend</div>
+        <span style="color:var(--accent);">●</span> Root &nbsp;&nbsp;
+        <span style="color:var(--blue);">●</span> Internal Node &nbsp;&nbsp;
+        <span style="color:var(--green);">●</span> Leaf Node &nbsp;&nbsp;
+        Lines represent left/right child pointers.
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ─────────────────────────────────────
+//  BST IMPLEMENTATION IN JS
+// ─────────────────────────────────────
+class BSTNode {
+  constructor(name, price) {
+    this.name  = name;
+    this.price = price;
+    this.left  = null;
+    this.right = null;
+  }
+}
+
+class BST {
+  constructor() { this.root = null; }
+
+  _insert(node, name, price) {
+    if (!node) return new BSTNode(name, price);
+    if (name < node.name)      node.left  = this._insert(node.left,  name, price);
+    else if (name > node.name) node.right = this._insert(node.right, name, price);
+    else return null; // duplicate
+    return node;
+  }
+  insert(name, price) {
+    const prev = this.count();
+    this.root = this._insert(this.root, name, price);
+    return this.count() > prev;
+  }
+
+  _search(node, name, cmp) {
+    if (!node) { cmp.val++; return null; }
+    cmp.val++;
+    if (name === node.name) return node;
+    if (name < node.name)  return this._search(node.left,  name, cmp);
+    return                        this._search(node.right, name, cmp);
+  }
+  search(name) {
+    const cmp = { val: 0 };
+    const res = this._search(this.root, name, cmp);
+    return { node: res, comparisons: cmp.val };
+  }
+
+  _findMin(node) {
+    while (node.left) node = node.left;
+    return node;
+  }
+  _delete(node, name, found) {
+    if (!node) { found.val = false; return null; }
+    if (name < node.name)      node.left  = this._delete(node.left,  name, found);
+    else if (name > node.name) node.right = this._delete(node.right, name, found);
+    else {
+      found.val = true;
+      if (!node.left && !node.right) return null;
+      if (!node.left)  return node.right;
+      if (!node.right) return node.left;
+      const succ = this._findMin(node.right);
+      node.name  = succ.name;
+      node.price = succ.price;
+      const f2 = { val: true };
+      node.right = this._delete(node.right, succ.name, f2);
+    }
+    return node;
+  }
+  delete(name) {
+    const found = { val: true };
+    this.root = this._delete(this.root, name, found);
+    return found.val;
+  }
+
+  updatePrice(name, newPrice) {
+    const { node } = this.search(name);
+    if (node) { const old = node.price; node.price = newPrice; return old; }
+    return null;
+  }
+
+  _inorder(node, arr) {
+    if (!node) return;
+    this._inorder(node.left, arr);
+    arr.push({ name: node.name, price: node.price });
+    this._inorder(node.right, arr);
+  }
+  inorder() { const arr = []; this._inorder(this.root, arr); return arr; }
+
+  _count(node) { if (!node) return 0; return 1 + this._count(node.left) + this._count(node.right); }
+  count() { return this._count(this.root); }
+
+  _isSkewed(node) {
+    if (!node) return false;
+    if (node.left && node.right) return false;
+    if (node.left)  return this._isSkewed(node.left);
+    if (node.right) return this._isSkewed(node.right);
+    return true;
+  }
+  isSkewed() { return this._isSkewed(this.root); }
+  isEmpty()  { return !this.root; }
+}
+
+// ─────────────────────────────────────
+//  ARRAY (LINEAR SEARCH)
+// ─────────────────────────────────────
+const itemArray = [];
+function arrayAdd(name, price) { itemArray.push({ name, price }); }
+function arraySearch(name) {
+  for (let i = 0; i < itemArray.length; i++) {
+    if (itemArray[i].name === name) return i + 1;
+  }
+  return itemArray.length;
+}
+function arraySyncDelete(name) {
+  const idx = itemArray.findIndex(x => x.name === name);
+  if (idx !== -1) itemArray.splice(idx, 1);
+}
+function arraySyncUpdate(name, price) {
+  const item = itemArray.find(x => x.name === name);
+  if (item) item.price = price;
+}
+
+// ─────────────────────────────────────
+//  INIT — SAMPLE DATA
+// ─────────────────────────────────────
+const bst = new BST();
+const samples = [
+  { name:'Apple',  price:30 },
+  { name:'Milk',   price:50 },
+  { name:'Rice',   price:70 },
+  { name:'Bread',  price:40 },
+  { name:'Butter', price:90 },
+  { name:'Eggs',   price:60 },
+  { name:'Sugar',  price:45 },
+];
+samples.forEach(s => { bst.insert(s.name, s.price); arrayAdd(s.name, s.price); });
+
+// ─────────────────────────────────────
+//  PANEL SWITCHING
+// ─────────────────────────────────────
+function switchPanel(id) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  event.currentTarget.classList.add('active');
+
+  if (id === 'inventory')  renderInventory();
+  if (id === 'tree')       renderTree();
+  if (id === 'complexity') renderComplexity();
+  updateHeader();
+}
+
+// ─────────────────────────────────────
+//  HEADER UPDATE
+// ─────────────────────────────────────
+function updateHeader() {
+  document.getElementById('hdr-count').textContent = bst.count();
+  document.getElementById('hdr-tree').textContent  = bst.isEmpty() ? 'Empty' : bst.isSkewed() ? 'Skewed' : 'Balanced';
+}
+
+// ─────────────────────────────────────
+//  TOAST
+// ─────────────────────────────────────
+let toastTimer;
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = 'show ' + type;
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { el.className = ''; }, 2800);
+}
+
+// ─────────────────────────────────────
+//  INVENTORY RENDER
+// ─────────────────────────────────────
+function renderInventory() {
+  const tbody = document.getElementById('inv-tbody');
+  const items = bst.inorder();
+  if (!items.length) {
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-msg">Inventory is empty. Add some items!</td></tr>';
+    return;
+  }
+  tbody.innerHTML = items.map((item, i) => `
+    <tr id="row-${item.name}">
+      <td class="rank-cell">${i + 1}</td>
+      <td class="name-cell">${item.name}</td>
+      <td class="price-cell" id="price-cell-${item.name}">₹ ${item.price.toFixed(2)}</td>
+      <td>
+        <span id="actions-${item.name}">
+          <button class="edit-btn" onclick="startInlineEdit('${item.name}', ${item.price})">Edit</button>
+          <button class="del-btn"  onclick="quickDelete('${item.name}')">Delete</button>
+        </span>
+      </td>
+    </tr>
+  `).join('');
+  updateHeader();
+}
+
+function startInlineEdit(name, price) {
+  document.getElementById('actions-' + name).innerHTML = `
+    <span class="inline-edit">
+      <input type="number" id="ie-${name}" value="${price}" min="0" step="0.01"/>
+      <button class="btn btn-primary" onclick="saveInlineEdit('${name}')">Save</button>
+      <button class="btn btn-danger"  onclick="renderInventory()">✕</button>
+    </span>`;
+}
+function saveInlineEdit(name) {
+  const val = parseFloat(document.getElementById('ie-' + name).value);
+  if (isNaN(val) || val < 0) { toast('Invalid price', 'error'); return; }
+  bst.updatePrice(name, val);
+  arraySyncUpdate(name, val);
+  toast(`Updated ${name} → ₹${val.toFixed(2)}`, 'success');
+  renderInventory();
+}
+function quickDelete(name) {
+  bst.delete(name);
+  arraySyncDelete(name);
+  toast(`Deleted "${name}"`, 'info');
+  renderInventory();
+  updateHeader();
+}
+
+// ─────────────────────────────────────
+//  ADD
+// ─────────────────────────────────────
+function doAdd() {
+  const name  = document.getElementById('add-name').value.trim();
+  const price = parseFloat(document.getElementById('add-price').value);
+  const res   = document.getElementById('add-result');
+
+  if (!name) { toast('Enter item name', 'error'); return; }
+  if (isNaN(price) || price < 0) { toast('Enter valid price', 'error'); return; }
+
+  const ok = bst.insert(name, price);
+  if (ok) {
+    arrayAdd(name, price);
+    toast(`"${name}" added at ₹${price.toFixed(2)} ✓`, 'success');
+    res.innerHTML = `<div class="result-box found"><span class="result-key">Added</span><span class="result-val">${name} — ₹${price.toFixed(2)}</span></div>`;
+    document.getElementById('add-name').value  = '';
+    document.getElementById('add-price').value = '';
+  } else {
+    toast(`"${name}" already exists. Use Update to change price.`, 'error');
+    res.innerHTML = `<div class="result-box not-found"><span class="result-key">Duplicate</span><span class="result-val">"${name}" already in inventory.</span></div>`;
+  }
+  updateHeader();
+}
+
+// ─────────────────────────────────────
+//  SEARCH
+// ─────────────────────────────────────
+function doSearch() {
+  const name = document.getElementById('search-name').value.trim();
+  const res  = document.getElementById('search-result');
+  if (!name) { toast('Enter item name', 'error'); return; }
+
+  const { node, comparisons } = bst.search(name);
+  if (node) {
+    toast(`Found "${name}" in ${comparisons} comparison(s)`, 'success');
+    res.innerHTML = `
+      <div class="result-box found">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+          <div><div class="result-key">Item Found</div><div class="result-val" style="color:var(--green);">${node.name}</div></div>
+          <div><div class="result-key">Price</div><div class="result-val">₹ ${node.price.toFixed(2)}</div></div>
+          <div><div class="result-key">BST Comparisons</div><div class="result-val" style="color:var(--blue);">${comparisons}</div></div>
+        </div>
+      </div>`;
+  } else {
+    toast(`"${name}" not found`, 'error');
+    res.innerHTML = `
+      <div class="result-box not-found">
+        <div class="result-key">Not Found</div>
+        <div class="result-val" style="color:var(--red);">"${name}" is not in the inventory.</div>
+        <div style="font-size:0.75rem;color:var(--muted);margin-top:8px;">Comparisons made: ${comparisons}</div>
+      </div>`;
+  }
+}
+
+// ─────────────────────────────────────
+//  DELETE
+// ─────────────────────────────────────
+function doDelete() {
+  const name = document.getElementById('del-name').value.trim();
+  const res  = document.getElementById('del-result');
+  if (!name) { toast('Enter item name', 'error'); return; }
+
+  const found = bst.delete(name);
+  if (found) {
+    arraySyncDelete(name);
+    toast(`"${name}" deleted ✓`, 'info');
+    res.innerHTML = `<div class="result-box found"><span class="result-key">Deleted</span><span class="result-val" style="color:var(--green);">"${name}" removed from BST.</span></div>`;
+    document.getElementById('del-name').value = '';
+  } else {
+    toast(`"${name}" not found`, 'error');
+    res.innerHTML = `<div class="result-box not-found"><span class="result-key">Not Found</span><span class="result-val" style="color:var(--red);">"${name}" does not exist.</span></div>`;
+  }
+  updateHeader();
+}
+
+// ─────────────────────────────────────
+//  UPDATE
+// ─────────────────────────────────────
+function doUpdate() {
+  const name  = document.getElementById('upd-name').value.trim();
+  const price = parseFloat(document.getElementById('upd-price').value);
+  const res   = document.getElementById('upd-result');
+
+  if (!name) { toast('Enter item name', 'error'); return; }
+  if (isNaN(price) || price < 0) { toast('Enter valid price', 'error'); return; }
+
+  const old = bst.updatePrice(name, price);
+  if (old !== null) {
+    arraySyncUpdate(name, price);
+    toast(`"${name}" updated ₹${old} → ₹${price} ✓`, 'success');
+    res.innerHTML = `<div class="result-box found">
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;">
+        <div><div class="result-key">Item</div><div class="result-val">${name}</div></div>
+        <div><div class="result-key">Old Price</div><div class="result-val" style="color:var(--red);">₹ ${old.toFixed(2)}</div></div>
+        <div><div class="result-key">New Price</div><div class="result-val" style="color:var(--green);">₹ ${price.toFixed(2)}</div></div>
+      </div></div>`;
+    document.getElementById('upd-name').value  = '';
+    document.getElementById('upd-price').value = '';
+  } else {
+    toast(`"${name}" not found`, 'error');
+    res.innerHTML = `<div class="result-box not-found"><span class="result-key">Not Found</span><span class="result-val" style="color:var(--red);">"${name}" is not in inventory.</span></div>`;
+  }
+}
+
+// ─────────────────────────────────────
+//  COMPARE
+// ─────────────────────────────────────
+function doCompare() {
+  const name = document.getElementById('cmp-name').value.trim();
+  const res  = document.getElementById('cmp-result');
+  if (!name) { toast('Enter item name', 'error'); return; }
+  if (bst.isEmpty()) { toast('Inventory is empty', 'error'); return; }
+
+  const { node, comparisons: bstCmp } = bst.search(name);
+  const arrCmp = arraySearch(name);
+  const n      = bst.count();
+  const logN   = Math.ceil(Math.log2(n + 1));
+
+  let bstClass   = 'neutral', arrClass = 'neutral';
+  let winner = 'Both took equal comparisons.';
+  if (bstCmp < arrCmp)      { bstClass = 'winner'; arrClass = 'loser';   winner = `BST is FASTER by ${arrCmp - bstCmp} comparison(s).`; }
+  else if (bstCmp > arrCmp) { bstClass = 'loser';  arrClass = 'winner';  winner = `Array is faster (BST may be skewed).`; }
+
+  res.innerHTML = `
+    <div class="card">
+      <div class="card-title">Searching for: "${name}" ${node ? '✅ Found' : '❌ Not Found'}</div>
+      <div class="compare-grid">
+        <div class="compare-card ${arrClass}">
+          <h3>Array (Linear)</h3>
+          <div class="big-num">${arrCmp}</div>
+          <div class="label">comparisons</div>
+          <div style="margin-top:10px;font-size:0.72rem;color:var(--muted);">Worst Case: O(n) = ${n}</div>
+        </div>
+        <div class="compare-card ${bstClass}">
+          <h3>BST (Binary)</h3>
+          <div class="big-num">${bstCmp}</div>
+          <div class="label">comparisons</div>
+          <div style="margin-top:10px;font-size:0.72rem;color:var(--muted);">Best Case: O(log n) ≈ ${logN}</div>
+        </div>
+      </div>
+      <div style="margin-top:16px;font-size:0.85rem;color:var(--yellow);font-weight:700;">⚡ ${winner}</div>
+      <div style="margin-top:8px;font-size:0.78rem;color:var(--muted);">Total items (n) = ${n} · BST best = ~${logN} · Array worst = ${n}</div>
+    </div>`;
+}
+
+// ─────────────────────────────────────
+//  COMPLEXITY PANEL
+// ─────────────────────────────────────
+function renderComplexity() {
+  const n     = bst.count();
+  const logN  = n > 0 ? Math.ceil(Math.log2(n + 1)) : 0;
+  const skew  = bst.isSkewed();
+  document.getElementById('cplx-count').textContent = `Items: ${n}`;
+  document.getElementById('cplx-logn').textContent  = `BST Best: ~${logN} comp`;
+  document.getElementById('cplx-n').textContent     = `Array Worst: ${n} comp`;
+  document.getElementById('cplx-skew').innerHTML    = bst.isEmpty() ? '' :
+    skew ? `<span class="skew-badge skewed">⚠️ Skewed Tree</span>`
+         : `<span class="skew-badge balanced">✅ Balanced Tree</span>`;
+}
+
+// ─────────────────────────────────────
+//  TREE VISUALIZER (Canvas)
+// ─────────────────────────────────────
+function renderTree() {
+  const canvas = document.getElementById('treeCanvas');
+  const ctx    = canvas.getContext('2d');
+
+  // Compute positions via BFS
+  function getPositions(root, canvasW, canvasH) {
+    if (!root) return [];
+    const positions = [];
+    const queue = [{ node: root, x: canvasW / 2, y: 50, spread: canvasW / 4 }];
+    while (queue.length) {
+      const { node, x, y, spread } = queue.shift();
+      positions.push({ node, x, y });
+      if (node.left)  queue.push({ node: node.left,  x: x - spread, y: y + 70, spread: spread / 2 });
+      if (node.right) queue.push({ node: node.right, x: x + spread, y: y + 70, spread: spread / 2 });
+    }
+    return positions;
+  }
+
+  const W = 700, H = 420;
+  canvas.width  = W;
+  canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+
+  if (bst.isEmpty()) {
+    ctx.fillStyle = '#8b949e';
+    ctx.font      = '16px Space Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText('Tree is empty. Add items to visualize.', W / 2, H / 2);
+    return;
+  }
+
+  const positions = getPositions(bst.root, W, H);
+  const posMap    = new Map(positions.map(p => [p.node, { x: p.x, y: p.y }]));
+
+  // Draw edges
+  positions.forEach(({ node, x, y }) => {
+    const drawEdge = (child) => {
+      const cp = posMap.get(child);
+      if (!cp) return;
+      ctx.beginPath();
+      ctx.moveTo(x, y);
+      ctx.lineTo(cp.x, cp.y);
+      ctx.strokeStyle = '#30363d';
+      ctx.lineWidth   = 2;
+      ctx.stroke();
+    };
+    if (node.left)  drawEdge(node.left);
+    if (node.right) drawEdge(node.right);
+  });
+
+  // Draw nodes
+  positions.forEach(({ node, x, y }) => {
+    const isRoot = node === bst.root;
+    const isLeaf = !node.left && !node.right;
+
+    // node circle
+    ctx.beginPath();
+    ctx.arc(x, y, 26, 0, Math.PI * 2);
+    ctx.fillStyle   = isRoot ? 'rgba(249,115,22,0.2)' : isLeaf ? 'rgba(34,197,94,0.15)' : 'rgba(56,189,248,0.15)';
+    ctx.strokeStyle = isRoot ? '#f97316' : isLeaf ? '#22c55e' : '#38bdf8';
+    ctx.lineWidth   = 2;
+    ctx.fill();
+    ctx.stroke();
+
+    // label
+    ctx.fillStyle  = '#e6edf3';
+    ctx.font       = 'bold 11px Space Mono, monospace';
+    ctx.textAlign  = 'center';
+    ctx.textBaseline = 'middle';
+    const shortName = node.name.length > 5 ? node.name.slice(0, 5) + '…' : node.name;
+    ctx.fillText(shortName, x, y - 5);
+    ctx.fillStyle = '#8b949e';
+    ctx.font      = '9px Space Mono, monospace';
+    ctx.fillText(`₹${node.price}`, x, y + 8);
+  });
+}
+
+// ─────────────────────────────────────
+//  INIT
+// ─────────────────────────────────────
+renderInventory();
+updateHeader();
+</script>
+</body>
+</html>
